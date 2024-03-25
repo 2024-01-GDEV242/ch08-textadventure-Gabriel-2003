@@ -19,7 +19,13 @@ public class Game
 {
     private Parser parser;
     private Room currentRoom;
-        
+    private Room lastRoom;
+    private Room classroom;
+    private Player me;
+    private Player NPC;
+    private long limit;
+    private long start;
+    private long end;
     /**
      * Create the game and initialise its internal map.
      */
@@ -27,6 +33,7 @@ public class Game
     {
         createRooms();
         parser = new Parser();
+        limit = 420000;
     }
 
     /**
@@ -34,30 +41,36 @@ public class Game
      */
     private void createRooms()
     {
-        Room outside, theater, pub, lab, office;
+        Room outside, theater, hallway, lab, office;
       
         // create the rooms
         outside = new Room("outside the main entrance of the university");
         theater = new Room("in a lecture theater");
-        pub = new Room("in the campus pub");
+        hallway = new Room("You are in the hallway to get to classrooms");
         lab = new Room("in a computing lab");
+        outside.addItem(new Item("pen", 1));
+        outside.addItem(new Item("paper", 1));
         office = new Room("in the computing admin office");
         
         // initialise room exits
         outside.setExit("east", theater);
         outside.setExit("south", lab);
-        outside.setExit("west", pub);
+        outside.setExit("west", hallway);
 
         theater.setExit("west", outside);
 
-        pub.setExit("east", outside);
+        hallway.setExit("east", outside);
 
         lab.setExit("north", outside);
         lab.setExit("east", office);
 
         office.setExit("west", lab);
+        
+        NPC = new Player(lab);
 
+        
         currentRoom = outside;  // start game outside
+        lastRoom = null;
     }
 
     /**
@@ -66,15 +79,28 @@ public class Game
     public void play() 
     {            
         printWelcome();
+        start = System.currentTimeMillis();
 
         // Enter the main command loop.  Here we repeatedly read commands and
         // execute them until the game is over.
                 
         boolean finished = false;
+        me = new Player(currentRoom);
         while (! finished) {
             Command command = parser.getCommand();
             finished = processCommand(command);
+             if(limit < 30000 && NPC.getCurrentRoom() != classroom)
+           {
+               NPC.setCurrentRoom(classroom);
+           }
+           
+             if(limit <= 0)
+           {
+               finished = true;
+               System.out.println("You ran out of time, Goodbye.");
+           }
         }
+        
         System.out.println("Thank you for playing.  Good bye.");
     }
 
@@ -84,8 +110,8 @@ public class Game
     private void printWelcome()
     {
         System.out.println();
-        System.out.println("Welcome to the World of Zuul!");
-        System.out.println("World of Zuul is a new, incredibly boring adventure game.");
+        System.out.println("Welcome To The College Campus!");
+        System.out.println("This is just a college simmulator");
         System.out.println("Type '" + CommandWord.HELP + "' if you need help.");
         System.out.println();
         System.out.println(currentRoom.getLongDescription());
@@ -113,6 +139,19 @@ public class Game
 
             case GO:
                 goRoom(command);
+                limit = limit - System.currentTimeMillis() - start;
+                break;
+            
+            case BACK:
+                goBack(command);
+                limit = limit - System.currentTimeMillis() - start;
+                break;
+                
+            case EAT:
+                System.out.println("You ate the food.");
+                
+            case LOOK:
+                System.out.println(currentRoom.getLongDescription());
                 break;
 
             case QUIT:
@@ -159,6 +198,7 @@ public class Game
             System.out.println("There is no door!");
         }
         else {
+            lastRoom = currentRoom;
             currentRoom = nextRoom;
             System.out.println(currentRoom.getLongDescription());
         }
@@ -177,6 +217,21 @@ public class Game
         }
         else {
             return true;  // signal that we want to quit
+        }
+    }
+    
+    private void goBack(Command command)
+    {
+        if(lastRoom != null)
+        {
+            Room nextRoom = lastRoom;
+            lastRoom = currentRoom;
+            currentRoom = nextRoom;
+            System.out.println(currentRoom.getLongDescription());
+        }
+        else
+        {
+            System.out.println("Nah, can't do that.");
         }
     }
 }
