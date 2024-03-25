@@ -2,8 +2,8 @@
 /**
  * Write a description of class Item here.
  *
- * @author (your name)
- * @version (a version number or a date)
+ * @author Jose Gabriel Torres
+ * @version 2024.03.25
  */
 public class Item
 {
